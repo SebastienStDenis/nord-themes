@@ -1,0 +1,9 @@
+.git/**
+.gitignore
+.vscodeignore
+.vscode/**
+.env
+.env.example
+publish.sh
+DEVELOPMENT.md
+**/*.map
