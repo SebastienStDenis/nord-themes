@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- Add icon.
+- Bug fixes.
+
 ## 1.0.3
 
 - Update README.md.
