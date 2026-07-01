@@ -2,7 +2,8 @@
 
 ## 1.0.4
 
-- Fix theme files not loading by renaming them from `.jsonc` to `.json`.
+- Add icon.
+- Bug fixes.
 
 ## 1.0.3
 
