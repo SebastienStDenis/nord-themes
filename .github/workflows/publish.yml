@@ -1,0 +1,83 @@
+name: Publish
+
+# On every merge/push to main: bump the patch version, record the merge
+# commit message in the changelog, and publish the extension to Open VSX.
+on:
+  push:
+    branches: [main]
+
+# Allow the workflow to push the version-bump commit back to main.
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Skip the run triggered by our own bump commit to avoid an infinite loop.
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history and a token that can push back to the branch.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          new_version="$(npm version patch --no-git-tag-version)"
+          echo "version=${new_version#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update changelog
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp)"
+          # Previous entries: everything after the top-level "# Changelog" header,
+          # with any leading blank lines stripped.
+          old_body="$(tail -n +2 CHANGELOG.md | sed '/./,$!d')"
+          {
+            echo "# Changelog"
+            echo
+            echo "## ${VERSION}"
+            echo
+            # Turn the commit message into bullet points, one per non-empty line.
+            printf '%s\n' "$COMMIT_MESSAGE" | while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              echo "- ${line}"
+            done
+            echo
+            printf '%s\n' "$old_body"
+          } > "$tmp"
+          mv "$tmp" CHANGELOG.md
+
+      # Publish before committing the bump: if publishing fails, main is left
+      # untouched so the same version is retried on the next run rather than
+      # being skipped.
+      - name: Publish to Open VSX
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: npx ovsx publish -p "$OVSX_TOKEN"
+
+      - name: Commit version bump and changelog
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "Release ${VERSION} [skip ci]"
+          git push origin HEAD:main
