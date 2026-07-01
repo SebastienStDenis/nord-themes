@@ -1,26 +1,26 @@
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-  <!-- Nord Themes icon: a tilde over a near-vertical dark/light split -->
+  <!-- Nord Themes icon: a tilde over a diagonal dark/light split -->
   <defs>
     <clipPath id="rounded">
       <rect width="128" height="128" rx="28" ry="28"/>
     </clipPath>
     <clipPath id="dark">
-      <polygon points="0,0 76,0 52,128 0,128"/>
+      <polygon points="0,0 102,0 26,128 0,128"/>
     </clipPath>
     <clipPath id="light">
-      <polygon points="76,0 128,0 128,128 52,128"/>
+      <polygon points="102,0 128,0 128,128 26,128"/>
     </clipPath>
   </defs>
   <g clip-path="url(#rounded)">
     <!-- dark theme half (left) -->
     <rect width="128" height="128" fill="#212121"/>
     <!-- light theme half (right) -->
-    <polygon points="76,0 128,0 128,128 52,128" fill="#eceff4"/>
+    <polygon points="102,0 128,0 128,128 26,128" fill="#eceff4"/>
     <path d="M28 74 C 42 50, 54 50, 64 64 C 74 78, 86 78, 100 54"
-          fill="none" stroke="#A3BE8C" stroke-width="12"
+          fill="none" stroke="#A3BE8C" stroke-width="17"
           stroke-linecap="round" clip-path="url(#dark)"/>
     <path d="M28 74 C 42 50, 54 50, 64 64 C 74 78, 86 78, 100 54"
-          fill="none" stroke="#5E81AC" stroke-width="12"
+          fill="none" stroke="#5E81AC" stroke-width="17"
           stroke-linecap="round" clip-path="url(#light)"/>
   </g>
 </svg>
