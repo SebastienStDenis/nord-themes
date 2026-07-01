@@ -63,6 +63,14 @@ jobs:
           } > "$tmp"
           mv "$tmp" CHANGELOG.md
 
+      # Publish before committing the bump: if publishing fails, main is left
+      # untouched so the same version is retried on the next run rather than
+      # being skipped.
+      - name: Publish to Open VSX
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: npx ovsx publish -p "$OVSX_TOKEN"
+
       - name: Commit version bump and changelog
         env:
           VERSION: ${{ steps.bump.outputs.version }}
@@ -73,8 +81,3 @@ jobs:
           git add package.json CHANGELOG.md
           git commit -m "Release ${VERSION} [skip ci]"
           git push origin HEAD:main
-
-      - name: Publish to Open VSX
-        env:
-          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
-        run: npx ovsx publish -p "$OVSX_TOKEN"
