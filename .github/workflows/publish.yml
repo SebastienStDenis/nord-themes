@@ -1,8 +1,5 @@
 name: Publish
 
-# Manual-only release. This never runs automatically — a maintainer triggers it
-# from the Actions tab, selecting the `main` branch, and types the changelog
-# entry for the version currently in package.json.
 on:
   workflow_dispatch:
     inputs:
@@ -14,7 +11,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Guard: only ever publish from main, even if someone picks another branch.
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
