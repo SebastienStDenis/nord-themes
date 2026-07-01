@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.7
+
+- Fix status bar remote button appearing slightly darker than the background in Nord Light
+
 ## 1.0.6
 
 - Fix status bar remote button showing blue instead of the flat background in Nord Dark
