@@ -1,4 +1,5 @@
 .git/**
+.github/**
 .claude/**
 .gitignore
 .vscodeignore
@@ -6,5 +7,6 @@
 .env
 .env.example
 publish.sh
+scripts/**
 DEVELOPMENT.md
 **/*.map

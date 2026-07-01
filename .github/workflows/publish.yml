@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       changelog:
-        description: "Changelog entry for this release (Markdown, one bullet per line)"
+        description: "Changelog entry for this release (Markdown)"
         required: true
         type: string
 
@@ -23,9 +23,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Read version from package.json
+      - name: Bump patch version
         id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          new_version="$(npm version patch --no-git-tag-version)"
+          echo "version=${new_version#v}" >> "$GITHUB_OUTPUT"
 
       - name: Prepend changelog entry
         env:
@@ -33,21 +35,17 @@ jobs:
           CHANGELOG_ENTRY: ${{ inputs.changelog }}
         run: node ./scripts/update-changelog.js
 
-      - name: Commit changelog
+      - name: Publish to Open VSX
+        run: npx ovsx publish -p "$OVSX_TOKEN"
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+
+      - name: Commit version bump and changelog
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- CHANGELOG.md; then
-            echo "CHANGELOG.md already up to date; nothing to commit."
-          else
-            git add CHANGELOG.md
-            git commit -m "Update changelog for v${VERSION}"
-            git push
-          fi
-
-      - name: Publish to Open VSX
-        run: npx ovsx publish -p "$OVSX_TOKEN"
-        env:
-          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+          git add package.json CHANGELOG.md
+          git commit -m "Release ${VERSION}"
+          git push origin HEAD:main
