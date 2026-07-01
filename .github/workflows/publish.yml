@@ -1,83 +1,57 @@
 name: Publish
 
-# On every merge/push to main: bump the patch version, record the merge
-# commit message in the changelog, and publish the extension to Open VSX.
+# Manual-only release. This never runs automatically — a maintainer triggers it
+# from the Actions tab, selecting the `main` branch, and types the changelog
+# entry for the version currently in package.json.
 on:
-  push:
-    branches: [main]
-
-# Allow the workflow to push the version-bump commit back to main.
-permissions:
-  contents: write
-
-concurrency:
-  group: publish
-  cancel-in-progress: false
+  workflow_dispatch:
+    inputs:
+      changelog:
+        description: "Changelog entry for this release (Markdown, one bullet per line)"
+        required: true
+        type: string
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Skip the run triggered by our own bump commit to avoid an infinite loop.
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    # Guard: only ever publish from main, even if someone picks another branch.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
+      - name: Check out main
         uses: actions/checkout@v4
-        with:
-          # Full history and a token that can push back to the branch.
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
 
-      - name: Bump patch version
-        id: bump
-        run: |
-          new_version="$(npm version patch --no-git-tag-version)"
-          echo "version=${new_version#v}" >> "$GITHUB_OUTPUT"
+      - name: Read version from package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Update changelog
+      - name: Prepend changelog entry
         env:
-          VERSION: ${{ steps.bump.outputs.version }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          set -euo pipefail
-          tmp="$(mktemp)"
-          # Previous entries: everything after the top-level "# Changelog" header,
-          # with any leading blank lines stripped.
-          old_body="$(tail -n +2 CHANGELOG.md | sed '/./,$!d')"
-          {
-            echo "# Changelog"
-            echo
-            echo "## ${VERSION}"
-            echo
-            # Turn the commit message into bullet points, one per non-empty line.
-            printf '%s\n' "$COMMIT_MESSAGE" | while IFS= read -r line; do
-              [ -z "$line" ] && continue
-              echo "- ${line}"
-            done
-            echo
-            printf '%s\n' "$old_body"
-          } > "$tmp"
-          mv "$tmp" CHANGELOG.md
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG_ENTRY: ${{ inputs.changelog }}
+        run: node ./scripts/update-changelog.js
 
-      # Publish before committing the bump: if publishing fails, main is left
-      # untouched so the same version is retried on the next run rather than
-      # being skipped.
+      - name: Commit changelog
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- CHANGELOG.md; then
+            echo "CHANGELOG.md already up to date; nothing to commit."
+          else
+            git add CHANGELOG.md
+            git commit -m "Update changelog for v${VERSION}"
+            git push
+          fi
+
       - name: Publish to Open VSX
+        run: npx ovsx publish -p "$OVSX_TOKEN"
         env:
           OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
-        run: npx ovsx publish -p "$OVSX_TOKEN"
-
-      - name: Commit version bump and changelog
-        env:
-          VERSION: ${{ steps.bump.outputs.version }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json CHANGELOG.md
-          git commit -m "Release ${VERSION} [skip ci]"
-          git push origin HEAD:main
