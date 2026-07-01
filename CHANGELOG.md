@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6
+
+- Fix status bar remote button showing blue instead of the flat background in Nord Dark
+- Style context and dropdown menus to match the theme
+- Nord-ify unsaved-tab borders, notification links, and the modified-settings indicator
+
 ## 1.0.5
 
 - automate relases
