@@ -2,7 +2,7 @@
   "name": "nord-themes",
   "displayName": "Nord Themes",
   "description": "A pair of Nord-inspired color themes — Nord Dark and Nord Light.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "SebastienStDenis",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -32,12 +32,12 @@
       {
         "label": "Nord Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/nord-dark.jsonc"
+        "path": "./themes/nord-dark.json"
       },
       {
         "label": "Nord Light",
         "uiTheme": "vs",
-        "path": "./themes/nord-light.jsonc"
+        "path": "./themes/nord-light.json"
       }
     ]
   }
